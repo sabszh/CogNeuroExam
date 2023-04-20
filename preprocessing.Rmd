@@ -1,0 +1,52 @@
+---
+title: "Preprocessing"
+output: html_document
+date: "2023-04-20"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+pacman::p_load(
+  tidyverse,
+  ggpubr,
+  brms,
+  cmdstanr,
+  tidybayes,
+  ggdist
+)
+
+library(ggdist)
+
+theme_set(theme_bw())
+
+options(mc.cores = parallel::detectCores(), 
+        brms.backend = "cmdstanr", 
+        control = list(adapt_delta = 0.9,
+                       max_treedepth = 20)
+        )
+```
+
+
+```{r}
+df <- read_csv('df.csv') %>% 
+  filter(!is.na(response_time) & response_time > 0)
+
+df %>% group_by(word,trial_type) %>% summarise(n(),mean(response_time))
+
+df %>% group_by(sub,run) %>% arrange(onset,.by_group=T) %>% mutate(image = lead(trial_type)) %>% filter(!str_detect(trial_type,'image')) %>% filter(is.na(task))
+
+```
+
+```{r}
+df %>% filter(!str_detect(df$trial_type,'image')) %>% ggplot()+aes(x=response_time,y=trial_type)+stat_halfeye()
+
+
+sum(str_detect(df$trial_type,'image.*'))
+```
+```{r}
+
+```
+
