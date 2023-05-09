@@ -8,6 +8,7 @@ date: "2023-04-20"
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
+
 ```{r}
 pacman::p_load(
   tidyverse,
@@ -32,21 +33,52 @@ options(mc.cores = parallel::detectCores(),
 
 ```{r}
 df <- read_csv('df.csv') %>% 
-  filter(!is.na(response_time) & response_time > 0)
+  filter(!is.na(response_time) & response_time > 0) %>% 
+  mutate(correct_resp = ifelse(sub == 101, 1-correct_resp,correct_resp)) %>% 
+  group_by(sub,run) %>% 
+  arrange(onset,.by_group=T) %>% 
+  mutate(image = lead(trial_type),
+         acc = mean(correct_resp)) %>% 
+  filter(!str_detect(trial_type,'image'))
+```
+```{r}
+df <- df %>% mutate(valence = !trial_type == 'word_neu')
 
-df %>% group_by(word,trial_type) %>% summarise(n(),mean(response_time))
+form <- bf(valence ~ 1+response_time,
+           family = bernoulli)
 
-df %>% group_by(sub,run) %>% arrange(onset,.by_group=T) %>% mutate(image = lead(trial_type)) %>% filter(!str_detect(trial_type,'image')) %>% filter(is.na(task))
+priors = get_prior(form,df)
 
+
+mod3 <- brm(
+  form,
+  data = df,
+  prior = priors
+)
+
+
+pp_check(mod3,ndraws=100)
+
+summary(mod3)
+
+df
 ```
 
 ```{r}
-df %>% filter(!str_detect(df$trial_type,'image')) %>% ggplot()+aes(x=response_time,y=trial_type)+stat_halfeye()
-
-
-sum(str_detect(df$trial_type,'image.*'))
+get_prior(form,df)
 ```
-```{r}
 
+
+```{r}
+df %>% filter(run == 1) %>% ggplot()+aes(x=response_time,y=trial_type,fill=correct_resp,color=image)+stat_halfeye(alpha=0.5)+xlim(0.3,1)
+```
+
+```{r}
+df %>% filter(sub == 98)
+```
+
+
+```{r}
+df %>% ggplot()+aes(x=acc,y=gender,color=run %>% as.factor())+geom_point()
 ```
 
