@@ -28,8 +28,9 @@ options(mc.cores = parallel::detectCores(),
         control = list(adapt_delta = 0.9,
                        max_treedepth = 20)
         )
-```
 
+df <- read_csv('df.csv')
+```
 
 ```{r}
 df <- read_csv('df.csv') %>% 
@@ -39,8 +40,18 @@ df <- read_csv('df.csv') %>%
   arrange(onset,.by_group=T) %>% 
   mutate(image = lead(trial_type),
          acc = mean(correct_resp)) %>% 
-  filter(!str_detect(trial_type,'image'))
+  filter(!str_detect(trial_type,'word'))
+
+# Create an empty accuracy column
+df$accuracy <- NA
+
+# Use ifelse statements to assign values based on conditions
+df$accuracy <- ifelse(df$trial_type == "image_neg" & df$response == "b", 0,
+                      ifelse(df$trial_type == "image_neg" & df$response == "y", 1,
+                             ifelse(df$trial_type == "image_pos" & df$response == "b", 1,
+                                    ifelse(df$trial_type == "image_pos" & df$response == "y", 0, NA))))
 ```
+
 ```{r}
 df <- df %>% mutate(valence = !trial_type == 'word_neu')
 
