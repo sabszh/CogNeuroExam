@@ -8,8 +8,8 @@ date: "2023-04-20"
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-
 ```{r}
+# Load packages
 pacman::p_load(
   tidyverse,
   ggpubr,
@@ -28,10 +28,13 @@ options(mc.cores = parallel::detectCores(),
         control = list(adapt_delta = 0.9,
                        max_treedepth = 20)
         )
-
-df <- read_csv('df.csv')
 ```
 
+
+```{r}
+# Load in data
+df <- read_csv('df.csv')
+```
 
 
 ```{r}
@@ -68,22 +71,13 @@ df <- df %>%
   mutate(correct_resp = ifelse(sub == 101, 1-correct_resp,correct_resp))    # Update values in the 'correct_resp' column based on the condition
 ```
 
-```{r}
-df
-```
-
-
-```{r}
-# Use ifelse statements to assign values based on conditions
-df$accuracy <- ifelse(df$trial_image == "image_neg" & df$response == "b", 0,
-                      ifelse(df$trial_image == "image_neg" & df$response == "y", 1,
-                             ifelse(df$trial_image == "image_pos" & df$response == "b", 1,
-                                    ifelse(df$trial_image == "image_pos" & df$response == "y", 0, NA))))
-```
-
-
 
 # Exploring data
+
+```{r}
+
+```
+
 
 ```{r}
 df %>%
@@ -97,37 +91,42 @@ df %>%
 # Modeling
 
 ```{r}
-form <- bf(trial_image ~ 1+response_time,
+form <- bf(trial_image ~ 1 + response_time,
            family = gaussian)
 
 priors = get_prior(form,df)
 
 
-mod1 <- brm(
+mod <- brm(
   form,
   data = df,
   prior = priors
 )
 
+pp_check(mod,ndraws=100)
 
-pp_check(mod1,ndraws=100)
-
-summary(mod3)
-
-df
+summary(mod)
 ```
 
 ```{r}
-get_prior(form,df)
+# Sampling and updating the model
+mod_samp <- as_draws_df(mod)
+
+mod_update <- ggplot(mod_samp) +
+  geom_density(aes(prior_Intercept), fill="steelblue", color="black",alpha=0.6) +
+  geom_density(aes(b_Intercept), fill="#FC4E07", color="black",alpha=0.6) +
+  geom_density(aes(prior_sigma), fill="yellow", color="black",alpha=0.6) +
+  geom_density(aes(sigma), fill="green", color="black",alpha=0.6) +
+  labs(title = "posterior trial_image ~ 1 + response_time")
 ```
 
 
-
-
-
-
-
+## Hypothesis testing
 ```{r}
-df %>% ggplot()+aes(x=acc,y=gender,color=run %>% as.factor())+geom_point()
+hypothesis(mod, "Intercept>trial_imageimage_neg")
+
+# put some more test we can put
 ```
+
+
 

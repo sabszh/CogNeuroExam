@@ -1,0 +1,30 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+```{r}
+# Loading libraries
+pacman::p_load(dplyr,purrr,tidyr, extraDistr, brms,hypr,lme4)
+
+
+# Loading files
+df <- read_csv("df.csv")
+
+# Converting the columns
+df <- df %>%
+  mutate(
+    gender = as.factor(gender),
+    trial_type = as.factor(trial_type),
+    correct_resp = as.factor(correct_resp),
+    response = as.factor(response)
+  )
+
+```
+
+```{r}
+df %>% 
+  group_by(sub,run) %>% 
+  arrange(onset,.by_group=T)
+```
+
