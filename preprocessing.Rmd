@@ -29,7 +29,7 @@ options(mc.cores = parallel::detectCores(),
                        max_treedepth = 20)
         )
 
-df <- read_csv('df.csv')
+df <- read_csv('Data/df.csv')
 ```
 
 
